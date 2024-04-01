@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtGui import QStandardItemModel
 
 from filter_header import FilterHeader
 from model import SortFilterProxyModel
@@ -9,10 +10,72 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.df = df
         self.lastSortActions = {}
-        self.setupUi()
-        self.setGeometry(300,200,700,500)
+        # self.setupUi()
+        # self.setGeometry(300,200,700,500)
+        self.tableView = QtWidgets.QTableView(self.centralwidget)
         self.show()
 
+
+
+    # def setupUi(self):
+    #     self.centralwidget = QtWidgets.QWidget(self)
+    #     self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
+    #
+    #     self.tableView = QtWidgets.QTableView(self.centralwidget)
+    #
+    #     self.tableView.setSortingEnabled(True)
+    #     self.tableView.setAlternatingRowColors(True)
+    #     self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+    #     self.tableView.verticalHeader().setVisible(False)
+    #
+    #     self.horizontalLayout.addWidget(self.tableView)
+    #     self.setCentralWidget(self.centralwidget)
+    #
+    #     header = FilterHeader(self.tableView, self)
+    #     self.tableView.setHorizontalHeader(header)
+    #
+    #     self.statusBar = QtWidgets.QStatusBar()
+    #     self.setStatusBar(self.statusBar)
+    #
+    #     model = self.createPersonModel(self)
+    #     proxy = SortFilterProxyModel(self)
+    #     proxy.setSourceModel(model)
+    #     self.tableView.setModel(proxy)
+    #
+    #     header.setFilterBoxes(self.df.shape[1])
+    #     header.filterActivated.connect(self.handleFilterActivated)
+
+
+class TableViewGenerator:
+    @staticmethod
+    def generate_table(tableView, dataframe):
+        # Create the model from the DataFrame
+        model = QStandardItemModel(dataframe.shape[0], dataframe.shape[1])
+        model.setHorizontalHeaderLabels(dataframe.columns)
+
+        for row in dataframe.itertuples():
+            for column, value in enumerate(row[1:]):  # Skip index
+                item = QtWidgets.QStandardItem(str(value))
+                model.setItem(row[0] - 1, column, item)
+
+        # Set the custom proxy model for filtering and sorting
+        proxyModel = SortFilterProxyModel()
+        proxyModel.setSourceModel(model)
+
+        # Set the custom header
+        header = FilterHeader(tableView)
+        tableView.setHorizontalHeader(header)
+
+        # Apply the model to the tableView
+        tableView.setModel(proxyModel)
+
+        # Setup connections for sorting and filtering if needed
+        # Example: header.filterActivated.connect(...)
+
+        # Additional setup like enabling sorting, setting selection behavior, etc.
+        tableView.setSortingEnabled(True)
+        tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        tableView.setAlternatingRowColors(True)
     def getLastSortAction(self, columnIndex):
         """Retrieve the last sort action for a given column index."""
         return self.lastSortActions.get(columnIndex, None)
@@ -75,31 +138,3 @@ class MainWindow(QtWidgets.QMainWindow):
     def resetTextFilter(self, columnIndex):
         self.tableView.model().setTextFilter(columnIndex, "")
         self.tableView.model().invalidateFilter()
-
-    def setupUi(self):
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
-
-        self.tableView = QtWidgets.QTableView(self.centralwidget)
-
-        self.tableView.setSortingEnabled(True)
-        self.tableView.setAlternatingRowColors(True)
-        self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.tableView.verticalHeader().setVisible(False)
-
-        self.horizontalLayout.addWidget(self.tableView)
-        self.setCentralWidget(self.centralwidget)
-
-        header = FilterHeader(self.tableView, self)
-        self.tableView.setHorizontalHeader(header)
-
-        self.statusBar = QtWidgets.QStatusBar()
-        self.setStatusBar(self.statusBar)
-
-        model = self.createPersonModel(self)
-        proxy = SortFilterProxyModel(self)
-        proxy.setSourceModel(model)
-        self.tableView.setModel(proxy)
-
-        header.setFilterBoxes(self.df.shape[1])
-        header.filterActivated.connect(self.handleFilterActivated)
